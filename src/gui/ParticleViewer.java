@@ -26,21 +26,6 @@ public class ParticleViewer extends JPanel implements MouseMotionListener, Mouse
 	private ParticleAttr ptcAttrVar = new ParticleAttr();
 	private Point centerPos = new Point(320, 320);
 	
-	Particle generateNewParticle(){
-		Particle p;
-		switch(pattern){
-		case 0:
-			p = new ParticleCircle(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
-			break;
-		case 1:
-			p = new ParticleSquare(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
-			break;
-		default: 
-			p = new Particle(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
-		}
-		return p;
-	}
-	
 	ParticleViewer(){
 		for(int i = 0; i < particles.length; i++){
 			particles[i] = generateNewParticle();
@@ -72,7 +57,21 @@ public class ParticleViewer extends JPanel implements MouseMotionListener, Mouse
 			p.paint(g);
 		}		
 	}
-
+	
+	Particle generateNewParticle(){
+		Particle p;
+		switch(pattern){
+		case 0:
+			p = new ParticleCircle(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
+			break;
+		case 1:
+			p = new ParticleSquare(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
+			break;
+		default: 
+			p = new Particle(centerPos.x, centerPos.y, ptcAttr, ptcAttrVar);
+		}
+		return p;
+	}
 
 	public void setParticleAttr(ParticleAttr ptcAttr) {
 		this.ptcAttr = ptcAttr;

@@ -5,19 +5,27 @@ import java.awt.Container;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
-import javax.swing.UIManager;
+import javax.swing.JToolBar;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import particle.ParticleAttr;
 
@@ -29,6 +37,7 @@ public class ParticleEditor implements ChangeListener, ActionListener
 	private JSlider [] confSliders;
 	private JSlider [] colorSliders;
 	private ParticleViewer particleViewer;
+	private boolean bReady = false;
 	public enum S {
 	    MAX_PARTICLES(0), 
 	    LIFESPAN(1), LIFESPAN_VAR(2),
@@ -47,27 +56,50 @@ public class ParticleEditor implements ChangeListener, ActionListener
 			"Emitter Angle", "Angle Variance",
 			"Speed", "Speed Variance"
 			};
+
+	private final String [] colorLabels = {"Start Red", "Start Green", "Start Blue", 
+			"Finish Red", "Finish Green", "Finish Blue"};
 	
-	private boolean bReady = false;
-	
-	public static void main(String[] args) 
-	{
-		new ParticleEditor();
+	public static void main(String[] args) {
+		ParticleEditor pe = new ParticleEditor();
+		pe.readFile(new File("spring.ini"));
 	}
 	
-	public ParticleEditor ()
-	{
-		
+	public void readFile(File file){
+		Scanner in;
 		try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-		
-		
+			in = new Scanner(file);
+			for(JSlider s: confSliders){
+				s.setValue(in.nextInt());
+			}
+			for(JSlider s: colorSliders){
+				s.setValue(in.nextInt());
+			}
+			in.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void saveFile(File file){
+		try{
+			PrintWriter writer = new PrintWriter(file);
+			for(JSlider s: confSliders){
+				writer.println(s.getValue());
+			}
+			for(JSlider s: colorSliders){
+				writer.println(s.getValue());
+			}
+			writer.close();
+		} 
+		catch (IOException exception){
+			exception.printStackTrace(); 
+		}
+	}
+	
+	public ParticleEditor (){
 		JFrame frame = new JFrame();
 		frame.setTitle("ParticleEditor");
-		
 		Container cp = frame.getContentPane();
 		cp.setLayout(new BorderLayout());
 
@@ -76,6 +108,32 @@ public class ParticleEditor implements ChangeListener, ActionListener
 		JPanel pParticle = new JPanel();
 		Box b = new Box(BoxLayout.Y_AXIS);
 		
+		// ------------ Tool Bar --------------------
+		JButton btnOpen = new JButton("Open");
+		btnOpen.setToolTipText("Open file");	
+		btnOpen.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser(); 
+				chooser.setFileFilter(new FileNameExtensionFilter("Particle Configuration Files" ,"ini"));
+				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) 
+					readFile(chooser.getSelectedFile());
+
+			}			
+		});		
+		JButton btnSave = new JButton("Save");
+		btnSave.setToolTipText("Save file");
+		btnSave.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser chooser = new JFileChooser(); 
+				chooser.setFileFilter(new FileNameExtensionFilter("Particle Configuration Files" ,"ini"));
+				if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) 
+					saveFile(chooser.getSelectedFile());
+
+			}			
+		});
+		JToolBar jtb = new JToolBar();
+		jtb.add(btnOpen);		
+		jtb.add(btnSave);		
 
 		// ------------ Particle Pattern ------------
 		JPanel pPattern = new JPanel();
@@ -98,59 +156,24 @@ public class ParticleEditor implements ChangeListener, ActionListener
 		// ------------ Particle Config ------------
 		JPanel pConf = new JPanel();
 		pConf.setBorder(BorderFactory.createTitledBorder("Particle Configuration"));
-
 		confSliders = new JSlider [labels.length];
 		pConf.setLayout(new GridLayout(labels.length, 2));
+		int [] max = {300, 300, 200, 96, 96, 96, 96, 360, 360, 600, 600}; 
+		int [] min = {20, 20, 0, 1, 1, 1, 1, 0, 0, 0, 0}; 
 		for(int i = 0; i < confSliders.length; i++){
 			JLabel label = new JLabel(labels[i]);
 			pConf.add(label);
 			confSliders[i] = new JSlider();
 			confSliders[i].addChangeListener(this);
+			confSliders[i].setMaximum(max[i]);
+			confSliders[i].setMinimum(min[i]);
 			pConf.add(confSliders[i]);
 		}
-
-		confSliders[S.MAX_PARTICLES.i].setMaximum(300);
-		confSliders[S.MAX_PARTICLES.i].setMinimum(20);
-		confSliders[S.MAX_PARTICLES.i].setValue(250);
-		confSliders[S.LIFESPAN.i].setMaximum(300);
-		confSliders[S.LIFESPAN.i].setMinimum(20);
-		confSliders[S.LIFESPAN.i].setValue(100);
-		confSliders[S.LIFESPAN_VAR.i].setMaximum(200);
-		confSliders[S.LIFESPAN_VAR.i].setMinimum(0);
-		confSliders[S.LIFESPAN_VAR.i].setValue(100);
-		confSliders[S.START_SIZE.i].setMaximum(96);
-		confSliders[S.START_SIZE.i].setMinimum(1);
-		confSliders[S.START_SIZE.i].setValue(32);
-		confSliders[S.START_SIZE_VAR.i].setMaximum(96);
-		confSliders[S.START_SIZE_VAR.i].setMinimum(1);
-		confSliders[S.START_SIZE_VAR.i].setValue(8);
-		confSliders[S.FINISH_SIZE.i].setMaximum(96);
-		confSliders[S.FINISH_SIZE.i].setMinimum(1);
-		confSliders[S.FINISH_SIZE.i].setValue(8);
-		confSliders[S.FINISH_SIZE_VAR.i].setMaximum(96);
-		confSliders[S.FINISH_SIZE_VAR.i].setMinimum(1);
-		confSliders[S.FINISH_SIZE_VAR.i].setValue(4);
-		confSliders[S.EMITTER_ANGLE.i].setMaximum(360);
-		confSliders[S.EMITTER_ANGLE.i].setMinimum(0);
-		confSliders[S.EMITTER_ANGLE.i].setValue(180);
-		confSliders[S.EMITTER_ANGLE_VAR.i].setMaximum(360);
-		confSliders[S.EMITTER_ANGLE_VAR.i].setMinimum(0);
-		confSliders[S.EMITTER_ANGLE_VAR.i].setValue(90);
-		confSliders[S.SPEED.i].setMaximum(600);
-		confSliders[S.SPEED.i].setMinimum(0);
-		confSliders[S.SPEED.i].setValue(250);
-		confSliders[S.SPEED_VAR.i].setMaximum(600);
-		confSliders[S.SPEED_VAR.i].setMinimum(0);
-		confSliders[S.SPEED_VAR.i].setValue(100);
-		
 		b.add(pConf);
 		
 		// ------------ Particle Color ------------
 		JPanel pColor = new JPanel();
 		pColor.setBorder(BorderFactory.createTitledBorder("Particle Color"));
-		
-		String [] colorLabels = {"Start Red", "Start Green", "Start Blue", 
-				"Finish Red", "Finish Green", "Finish Blue"};
 		colorSliders = new JSlider [colorLabels.length];
 		pColor.setLayout(new GridLayout(colorLabels.length, 2));
 		for(int i = 0; i < colorSliders.length; i++){
@@ -167,16 +190,16 @@ public class ParticleEditor implements ChangeListener, ActionListener
 		// ---------------------------------------
 		
 		pParticle.add(b);
-		
+
+		cp.add(jtb, BorderLayout.NORTH);
 		cp.add(particleViewer, BorderLayout.CENTER);
 		cp.add(pParticle, BorderLayout.EAST);
 
 		bReady = true;
-		stateChanged(null);
+		update();
 		frame.setSize(1024, 640);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		//frame.setExtendedState(frame.getExtendedState() | JFrame.MAXIMIZED_BOTH);
 	}
 	
 	public void update(){
